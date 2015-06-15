@@ -1,0 +1,1076 @@
+```{r, echo = FALSE, message = FALSE}
+library(stats)
+library(dplyr)
+library(tidyr)
+library(reshape2)
+# library(data.table)
+knitr::opts_chunk$set(
+  comment = "",
+  error = FALSE,
+  tidy = FALSE,
+  cache = FALSE,
+  collapse=TRUE
+)
+# source: http://blog.datacamp.com/15-easy-solutions-data-frame-problems-r/
+# options(datatable.auto.index=FALSE)
+# 1 to 3.4: Intro
+# 4 ... Why And How To Reshape A Data Frame From Wide To Long Format And Vice Versa
+```
+
+---
+title: "15 Easy Solutions To Your Data Frame Problems In R"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+---
+
+R’s data frames regularly create somewhat of a furor on public forums like Stack Overflow and Reddit. Starting R users often experience problems with the data frame in R and it doesn’t always seem to be straightforward. But does it really need to be so?
+
+Well, not necessarily.
+
+With today’s post, [DataCamp](https://www.datacamp.com/?utm_source=data_frame_tutorial_post&utm_medium=blog&utm_campaign=data_frame_post) wants to show you that data frames don’t need to be hard: we offer you 15 easy, straightforward solutions to the most frequently occurring problems with data.frame. These issues have been selected from the most recent and sticky or upvoted [Stack Overflow](http://stackoverflow.com) posts. If, however, you are more interested in getting an elaborate introduction to data frames, you might consider taking a look at our [Introduction to R](https://www.datacamp.com/courses/free-introduction-to-r?utm_source=data_frame_tutorial_post&utm_medium=blog&utm_campaign=data_frame_post) course.
+rubik
+
+### 1. The Root: What’s A Data Frame?
+
+R’s data frames offer you a great first step by allowing you to store your data in overviewable, rectangular grids. Each row of these grids corresponds to measurements or values of an instance, while each column is a vector containing data for a specific variable.
+
+This means that a data frame’s rows do not need to contain, but can contain, the same type of values: they can be numeric, character, logical, etc.; As you can see in the data frame below, each instance, listed in the first unnamed column with a number, has certain characteristics that are spread out over the remaining three columns. Each column needs to consist of values of the same type, since they are data vectors: as such, the `breaks` column only contains numerical values, while the `wool` and `tension` columns have characters as values that are stored as factors.
+
+In case you’re wondering, this data frame lists the number of breaks in yarn during weaving.
+
+    Remember that factors are variables that can only contain a limited number of different values. As such, they are often called categorical variables.
+
+```{r}
+head(warpbreaks)
+```
+
+Maybe you will have already noticed that data frames ressemble matrices, except for the fact that their data values don’t need to be of the same type, while matrices do require this. Data frames also have similarities with lists, which are basically collections of components. A data frame, however, is a list with vector structures of the same length. As such, data frames can actually be seen as special types of lists and can be accessed as either a matrix or a list.
+
+If you want more information or if you just want to review and take a look at a comparison of the five general data structures in R, watch this video: https://vimeo.com/130411487
+
+As you can see, there are different data structures that impose different requirements on how the data is stored. Data frames are handy to store multiple data vectors, which makes it easier to organize your data, to apply functions to it and to save your work. It’s almost similar to having a single spreadsheet with elements that all have equal lengths!
+  
+### 2. The Basics Of Data Frames: The Questions And Solutions
+
+#### 2.1. How To Create A Simple Data Frame in R
+
+Even though looking at built-in data frames such as `esoph` is interesting, it can easily get more exciting!
+
+How?
+
+By making your own data frame in R, of course! You can do this very easily by making some vectors first:
+
+```{r}
+Died.At <- c(22,40,72,41)
+Writer.At <- c(16, 18, 36, 36)
+First.Name <- c("John", "Edgar", "Walt", "Jane")
+Second.Name <- c("Doe", "Poe", "Whitman", "Austen")
+Sex <- c("MALE", "MALE", "MALE", "FEMALE")
+Date.Of.Death <- c("2015-05-10", "1849-10-07", "1892-03-26","1817-07-18")
+```
+
+Next, you just combine the vectors that you made with the `data.frame()` function:
+
+```{r}
+writers_df <- data.frame(Died.At, Writer.At, First.Name, Second.Name, Sex, Date.Of.Death)
+```
+
+```
+Remember that data frames must have variables of the same length. Check if you have put an equal number of arguments in all c() functions that you assign to the vectors and that you have indicated strings of words with "".
+```
+
+```
+Note that when you use the data.frame() function, character variables are imported as factors or categorical variables. Use the str() function to get to know more about your data frame.
+```
+
+```{r}
+str(writers_df)
+```
+
+```
+Note that if you’re more interested in inspecting the first and the last lines of your data frame, you can use the head() and tail() functions, respectively.
+```
+
+You see that the `First.Name`, `Second.Name`, `Sex` and `Date.Of.Death` variables of the `writers_df` data frame have all been read in as factors. But do you want this?
+    
+* For the variables `First.Name` and `Second.Name`, you don’t want this. You can use the `I()` function to insulate them. This function inhibits the interpretation of its arguments. In other words, by just slightly changing the definitions of the vectors `First.Name` and `Second.Name` with the addition of the `I()` function, you can make sure that the proper names are not interpreted as factors.
+
+* You can keep the `Sex` vector as a factor, because there are only a limited amount of possible values that this variable can have.
+
+* Also for the variable `Date.of.Death` you don’t want to have a factor. It would be better if the values are registered as dates. You can add the `as.Date()` function to this variable to make sure this happens.
+
+```{r, echo=FALSE}
+rm(Date.Of.Death, Died.At, First.Name, Second.Name, Sex, Writer.At, writers_df)
+```
+
+
+```{r}
+Died.At <- c(22,40,72,41)
+Writer.At <- c(16, 18, 36, 36)
+First.Name <- I(c("John", "Edgar", "Walt", "Jane"))
+Second.Name <- I(c("Doe", "Poe", "Whitman", "Austen"))
+Sex <- c("MALE", "MALE", "MALE", "FEMALE")
+Date.Of.Death <- as.Date(c("2015-05-10", "1849-10-07", "1892-03-26","1817-07-18"))
+writers_df <- data.frame(Died.At, Writer.At, First.Name, Second.Name, Sex, Date.Of.Death)
+
+str(writers_df)
+```
+
+If you use other functions such as `read.table()` or other functions that are used to input data, such as `read.csv()` and `read.delim()`, a data frame is returned as the result. This way, files that look like this one below or files that have other delimiters, will be converted to data frames once they are read into R with these functions.
+
+```{r, echo=FALSE}
+writers_df
+```
+
+If you want to know more about how you can read and import Excel files into R, make sure to check out our [tutorial](http://blog.datacamp.com/r-tutorial-read-excel-into-r/?utm_source=data_frame_tutorial_post&utm_medium=blog&utm_campaign=data_frame_post)! Alternatively, you could check out the [Rdocumentation page on](http://www.rdocumentation.org/packages/utils/functions/read.table) read.table.
+
+
+#### 2.2. How To Change A Data Frame’s Row And Column Names
+
+Data frames can also have a names attribute, by which you can see the names of the variables that you have included into your data frame. In other words, you can also set the header for your data frame. You already did this before when making the data frame object `writers_df`; You see that the names of the variables `Died.At`, `Writer.At`, `First.Name`, `Second.Name`, `Sex` and `Date.Of.Death` appear:
+
+```{r}
+writers_df
+```
+
+You can also retrieve the names with the `names()` function:
+
+```{r}
+names(writers_df)
+```
+
+Now that you see the names of your data frame, you’re not so sure if these are efficient or correct. To change the names that appear, you can easily continue using the `names()` function. Make sure, though, that you have a number of arguments in the `c()` function that is equal to the number of variables that you have included into your data frame. In this case, since there are six variables `Died.At`, `Writer.At`, `First.Name`, `Second.Name`, `Sex` and `Death`, you want six arguments in the `c()` function. Otherwise, the other variables will be interpreted as “NA”.
+
+```
+Note also how the arguments of the c() function are inputted as strings!
+```
+
+```{r, echo=FALSE}
+rm(Date.Of.Death, Died.At, First.Name, Second.Name, Sex)
+```
+
+```{r}
+names(writers_df) <- c("Age.At.Death", "Age.As.Writer", "Name", "Surname", "Gender", "Death")
+
+names(writers_df)
+```
+
+```
+Tip: try to leave out the two last arguments from the c() function and see what happens!
+```
+
+__Note__ that you can also access and change the column and row names of your data frame with the functions `colnames()` and `rownames()`, respectively:
+
+```{r, eval=FALSE}
+colnames(writers_df) <- c("Age.At.Death", "Age.As.Writer", "Name", "Surname", "Gender", "Death")
+rownames(writers_df) <- c("ID1", "ID2", "ID3", "ID4")
+```
+
+#### 2.3 How To Check A Data Frame’s Dimensions
+
+As you know, the data frame is similar to a matrix, which means that its size is determined by how many rows and columns you have combined into it. To check how many rows and columns you have in your data frame, you can use the `dim()` function:
+
+```{r}
+dim(writers_df)
+```
+
+The result of this function is represented as `[1] 4 6`. Just like a matrix, the data frame’s dimensions are defined by the number of rows, followed by the number of columns. If you are in doubt, you can check your numbers through a comparison with the original data frame!
+
+__Note__ that you can also just retrieve the number of rows or columns by entering
+
+```{r}
+dim(writers_df)[1] #Number of rows
+
+dim(writers_df)[2] #Number of columns
+```
+
+or by using the functions `nrow()` and `ncol()`, to retrieve the number of rows or columns, respectively:
+
+```{r}
+nrow(writers_df) 
+
+ncol(writers_df)
+```
+
+Since the data frame structure is also similar to a list, you could also use the `length()` function to retrieve the number of rows:
+
+```{r}
+length(writers_df)
+```
+
+#### 2.4 How To Access And Change A Data Frame’s Values
+
+##### 2.4.1 …. Through The Variable Names
+
+Now that we have retrieved and set the names of our data frame, we want to take a closer look at the values that are actually stored in it. There are two straightforward ways that you can access these values. First, you can try to access them by just entering the data frame’s name in combination with the variable name:
+
+```{r}
+writers_df$Age.As.Writer
+```
+
+__Note__ that if you change one of the values in the vector `Age` that this change will not be incorporated into the data frame:
+
+```{r}
+Writer.At[1] <- 2
+
+writers_df
+```
+
+```{r, echo=FALSE}
+rm(Writer.At)
+```
+
+
+In the end, with this method of accessing the values, you just create a copy of a certain variable! That’s why any changes to the variables do not change the data frame’s variables.
+
+##### 2.4.2 … Through The [,] and $ Notations
+
+You can also access the data frame’s values by using the [,] notation:
+
+```{r}
+writers_df[1:2, 3] #Value located on the first and second row, third column
+
+writers_df[, 3] #Values located in the third column
+
+writers_df[3, ] #Values located in the third row
+```
+
+```
+Remember that data frames’ dimensions are defined as rows by columns.
+```
+
+An alternative to the [,] notation is a notation with `$`:
+
+```{r}
+writers_df$Age.At.Death
+
+writers_df$Age.At.Death[3] #Value located on third row of the column `Age.At.Death`
+```
+
+__Note__ that you can also change the values of your data frame by simply using these notations to perform mathematical operations:
+
+```{r, eval=FALSE}
+writers_df$Age.At.Death <- writers_df$Age.At.Death - 1
+writers_df[, 1] <- writers_df$Age.At.Death - 1
+```
+
+If you really want to make your hands dirty some more and change some of the data frame’s values, you can use the [,] notation to actually change the values inside your data frame one by one:
+
+```{r}
+writers_df[1, 3] <- "Jane"
+
+writers_df[1, 5] <- "FEMALE"
+
+writers_df
+```
+
+#### 2.5 Why And How To Attach Data Frames
+
+The $ notation is pretty handy, but it can become very annoying when you have to type it each time that you want to work with your data. The `attach()` function offers a solution to this: it takes a data frame as an argument and places it in the search path at position 2. So unless there are variables in position 1 that are exactly the same as the ones from the data frame you have inputted, the variables from your data frame are considered as variables that can be immediately called on.
+
+__Note__ that the search path is in fact the order in which R accesses files. You can look this up by entering the `search()` function:
+
+```{r}
+search()
+```
+
+```{r}
+attach(writers_df)
+```
+
+```{r}
+writers_df
+```
+
+__Note__ that you can alternatively use the `with()` function to attach the data frame, but that this requires you to specify some more arguments:
+
+```{r}
+with(writers_df, c("Age.At.Death", "Age.As.Writer", "Name", "Surname", "Gender", "Death"))
+```
+
+```{r}
+writers_df
+```
+
+You can now safely execute the following command and you can actually access/change the values of all the data frame’s variables:
+
+```{r}
+Age.At.Death
+```
+
+```{r}
+Age.At.Death <- Age.At.Death - 1
+
+Age.At.Death
+```
+
+If you get an error that tells you that “The following objects are masked _by_ .GlobalEnv:”, this is because you have objects in your global environment that have the same name as your data frame. Those objects could be the vectors that you created above, if you didn’t change their names. You have two solutions to this:
+
+1. You just don’t create any objects with those names in your global environment. This is more a solution for those of you who imported their data through `read.table()`, `read.csv()` or `read.delim()`, but not really appropriate for this case.
+
+2. You rename the objects in the data frame so that there’s no conflict. This is the solution that was applied in this tutorial. So, rename your columns with the `names()` or `colnames()` functions.
+
+```
+Note that if all else fails, you can just remember to always refer to your data frame’s column names with the $ notation!
+```
+
+```{r, echo=FALSE}
+rm(Age.At.Death)
+```
+
+#### 2.6. How To Apply Functions To Data Frames
+
+Now that you have successfully made and modified your data frame by putting a header in place, you can start applying functions to it! In some cases where you want to calculate stuff, you might want to put the numeric data in a separate data frame:
+
+```{r}
+Ages <- writers_df[, 1:2]
+```
+
+Only then can you start to get, for example, the mean and the median of your numeric data. You can do this with the `apply()` function. The first argument of this function should be your smaller data frame, in this case, `age`. The second argument designates what data you want to consider for the calculations of the mean or median: columns or rows. In this case, we want to calculate the median and mean of the variables `Age.At.Death` and `Age.As.Writer`, which designate columns in the data frame. The last argument then specifies the exact calculations that you want to do on your data:
+
+```{r}
+apply(Ages, 2, median)
+
+apply(Ages, 1, median)
+
+apply(Ages, 2, mean)
+```
+
+Do you want to know more about the `apply()` function and how to use it? Check out our [Intermediate R](https://www.datacamp.com/courses/intermediate-r?utm_source=data_frame_tutorial_post&utm_medium=blog&utm_campaign=data_frame_post) course, which teaches you, amongst other things, how to make your R code more efficient and readable using this function.
+
+```{r, echo=FALSE}
+rm(Ages)
+```
+
+### 3. Surpassing The Data Frame Basics: More Questions, More Answers
+
+Now that you have been introduced to the basic pitfalls of data frames, it’s time to look at some problems, questions or difficulties that you might have while working with data frames more intensively.
+
+#### 3.1. How To Create An Empty Data Frame
+
+The easiest way to create an empty data frame is probably by just assigning a `data.frame()` function without any arguments to a vector:
+
+```{r}
+ab <- data.frame()
+ab
+```
+
+You can then start filling your data frame up by using the [,] notation. Be careful, however, because it’s easy to make errors while doing this!
+
+__Note__ how you don’t see any column names in this empty data set. If you do want to have those, you can just initialize empty vectors in your data frame, like this:
+
+```{r}
+Age <- numeric()
+Name <- character()
+ID <- integer()
+Gender <- factor()
+Date <- as.Date(character())
+
+ab <- data.frame(c(Age, Name, ID, Gender, Date))
+ab
+```
+
+```{r, echo=FALSE}
+rm(ab)
+```
+
+
+#### 3.2. How To Extract Rows And Colums, Subseting Your Data Frame
+
+Subsetting or extracting specific rows and columns from a data frame is an important skill in order to surpass the basics that have been introduced in step two, because it allows you to easily manipulate smaller sets of your original data frame. You basically extract those values from the rows and columns that you need in order to optimize the data analyses you make.
+
+It’s easy to start subsetting with the [,] notation that was described in step two:
+
+```{r}
+writer_names_df <- writers_df[1:4, 3:4]
+
+writer_names_df
+```
+
+__Note__ that you can also define this subset with the variable names:
+
+```{r}
+writer_names_df <- writers_df[1:4, c("Name", "Surname")]
+
+writer_names_df
+```
+
+```
+Tip: be careful when you are subsetting just one column!
+```
+
+R has the tendency to simplify your results, which means that it will read your subset as a vector, which normally, you don’t want to get. To make sure that this doesn’t happen, you can add the argument `drop=FALSE`:
+
+```{r}
+writer_names_df <- writers_df[1:4, "Name", drop=FALSE]
+str(writer_names_df)
+
+writer_names_df
+```
+
+In a next step, you can try subsetting with the `subset()` function:
+
+```{r}
+writer_names_df <- subset(writers_df, Age.At.Death <= 40 & Age.As.Writer >= 18)
+
+writer_names_df
+```
+
+You can also subset on a particular value:
+
+```{r}
+writer_names_df <- subset(writers_df, Name =="Jane")
+
+writer_names_df
+```
+
+You can not only subset with the R functions that have been described above. You can also turn to `grep()` to get the job done. For example, if you want to work with the rows in the column `Age.At.Death` that have values that contain “3”, you can use the following line of code:
+
+```{r}
+fourty_writers <- writers_df[grep("4", writers_df$Age.At.Death),]
+
+fourty_writers
+```
+
+__Note__ that by subsetting, you basically stop considering certain values of your data frame. This might mean that you remove certain features of a factor, by, for example, only considering the `MALE` members of the `writers_df` data frame. Notice how all factor levels of this column still remain present, even though you have created a subset:
+
+```{r}
+male_writers <- writers_df[Gender == "MALE", ]
+
+str(male_writers)
+```
+
+To remove the factor levels that are no longer present, you can enter the following line of code:
+
+```{r}
+factor(Gender)
+```
+
+```{r, echo=FALSE}
+rm(writer_names_df, fourty_writers, male_writers)
+```
+
+#### 3.3. How To Remove Columns And Rows From A Data Frame
+
+If you want to remove values or entire columns from your data frame, you can assign a NULL value to the desired unit:
+
+```{r, eval=FALSE}
+Age.At.Death <- NULL
+```
+
+To remove rows, the procedure is a bit more complicated. You define a new vector in which you list for every row whether to have it included or not. Then, you apply this vector to your data frame:
+
+```{r}
+rows_to_keep <- c(TRUE, FALSE, TRUE, FALSE)
+limited_writers_df <- writers_df[rows_to_keep, ]
+
+limited_writers_df
+```
+
+__Note__ that you can also do the opposite by just adding `!`, stating that the reverse is true:
+
+```{r}
+less_writers_df <- writers_df[!rows_to_keep,]
+
+less_writers_df
+```
+
+You can also work with thresholds. For example, you can specify that you only want to keep all writers that were older than fourty when they died:
+
+```{r}
+fourty_sth_writers <- writers_df[writers_df$Age.At.Death > 40,]
+
+fourty_sth_writers
+```
+
+
+```{r, echo=FALSE}
+rm(Age.At.Death, rows_to_keep)
+rm(limited_writers_df, less_writers_df, fourty_sth_writers)
+```
+
+
+#### 3.4. How To Add Rows And Columns To A Data Frame
+
+Much in the same way that you used the [,] and $ notations to access and change single values of your data frame, you can also easily add columns to your data frame:
+
+```{r, eval=FALSE}
+writers_df$Location <- c("Belgium", "United Kingdom", "United States", "United Kingdom")
+```
+
+Appending rows to an existing data frame is somewhat more complicated. To easily do this by first making a new row in a vector, respecting the column variables that have been defined in `writers_df` and by then binding this row to the original data frame with the `rbind()` function:
+
+```{r}
+new_row <- c(50, 22, "Roberto", "Bolano", "MALE", "2003-07-15")
+writers_df_large <- rbind(writers_df, new_row)
+
+writers_df_large
+```
+
+```{r, echo=FALSE}
+rm(writers_df_large, new_row)
+# rm(writers_df)
+```
+
+### 4. Why And How To Reshape A Data Frame From Wide To Long Format And Vice Versa
+
+When you have multiple values, spread out over multiple columns, for the same instance, your data is in the “wide” format. On the other hand, when your data is in the “long” format if there is one observation row per variable. You therefore have multiple rows per instance. Let’s illustrate this with an example. Long data looks like this:
+
+```{r}
+Subject <- c(1,2,1,2,2,1)
+Gender <- c("M", "F", "M", "F", "F","M")
+Test <- c("Read", "Write", "Write", "Listen", "Read", "Listen")
+Result <- c(10, 4, 8, 6, 7, 7)
+
+observations_long <- data.frame(Subject, Gender, Test, Result)
+observations_long
+```
+
+As you can see, there is one row for each value that you have in the `Test` variable. A lot of statistical tests favor this format.
+
+This data frame would look like the following in the wide format:
+
+```{r}
+Subject <- c(1,2)
+Gender <- c("M", "F")
+Read <- c(10, 7)
+Write <-c(8, 4)
+Listen <- c(7, 6)
+
+observations_wide <- data.frame(Subject, Gender, Read, Write, Listen)
+
+observations_wide
+```
+
+
+You see that each column represents a unique pairing of the various factors with the values.
+
+Since different functions may require you to input your data either in “long” or “wide” format, you might need to reshape your data set. There are two main options that you can choose here: you can use the `stack()` function or you can try using the `reshape()` function. The former is preferred when you work with simple data frames, while the latter is more often used on more complex data frames, mostly because there’s a difference in the possibilities that both functions offer.
+
+Make sure to keep on reading to know more about the differences in possibilities between the `stack()` and `reshape()` functions!
+
+#### 4.1. Using stack() For Simply Structured Data Frames
+
+The `stack()` function basically concatenates or combines multiple vectors into a single vector, along with a factor that indicates where each observation originates from.
+
+To go from wide to long format, you will have to stack your observations, since you want one observation row per variable, with multiple rows per variable. In this case, you want to merge the columns `Read`, `Write` and `Listen` together, qua names and qua values:
+
+```{r}
+long_format <- stack(observations_wide, select=c(Read, Write, Listen))
+
+long_format
+```
+
+To go from long to wide format, you will need to unstack your data, which makes sense because you want to have one row per instance with each value present as a different variable. Note here that you want to disentangle the `Result` and `Test` columns:
+
+```{r}
+wide_format <- unstack(observations_long, Result ~ Test)
+
+wide_format
+```
+
+```{r, echo=FALSE}
+rm(long_format, wide_format)
+```
+
+#### 4.2. Using `reshape()` For Complex Data Frames
+
+This function is part of the `stats` package. This function is similar to the `stack()` function, but is a little bit more elaborate. Read and see for yourself how reshaping your data works with the `reshape()` function:
+
+To go from a wide to a long data format, you can first start off by entering the `reshape()` function. The first argument should always be your original wide data set. In this case, you can specify that you want to input the `observations_wide` to be converted to a long data format.
+
+Then, you start adding other arguments to the `reshape()` function:
+
+1. Include a list of variable names that define the different measurements through `varying`. In this case, you store the scores of specific tests in the columns “Read”, “Write” and “Listen”.
+
+2. Next, add the argument `v.names` to specify the name that you want to give to the variable that contains these values in your long dataset. In this case, you want to combine all scores for all reading, writing and listening tests into one variable `Score`.
+
+3. You also need to give a name to the variable that describes the different measurements that are inputted with the argument `timevar`. In this case, you want to give a name to the column that contains the types of tests that you give to your students. That’s why this column’s name should be called “Test”.
+
+4. Then, you add the argument `times`, because you need to specify that the new column “Test” can only take three values, namely, the test components that you have stored: “Read”, “Write”, “Listen”.
+
+5. You’re finally there! Give in the end format for the data with the argument `direction`.
+
+6. Additionally, you can specify new row names with the argument `new.row.names`.
+
+```
+Tip: try leaving out this last argument and see what happens!
+```
+
+```{r}
+# library(stats)
+long_reshape <- reshape(observations_wide, 
+             varying = c("Read", "Write", "Listen"), 
+             v.names = "Score",
+             timevar = "Test", 
+             times = c("Read", "Write", "Listen"),
+             direction = "long",
+             new.row.names = 1:1000)
+
+long_reshape
+```
+
+From long to wide, you take sort of the same steps. First, you take the `reshape()` function and give it its first argument, which is the data set that you want to reshape. The other arguments are as follows:
+
+1. `timevar` allows you to specify that the variable `Test`, which describes the different tests that you give to your students, should be decomposed.
+
+2. You also specify that the `reshape()` function shouldn’t take into account the variables `Subject` and `Gender` of the original data set. You put these column names into `idvar`.
+
+3. By not naming the variable `Result`, the `reshape()` function will know that both `Test` and `Result` should be recombined.
+
+4. You specify the direction of the reshaping, which is in this case, `wide`!
+
+```{r}
+wide_reshape <- reshape(observations_long, 
+                        timevar = "Test",
+                        idvar = c("Subject", "Gender"),
+                        direction = "wide")
+
+wide_reshape
+```
+
+```
+Note that if you want you can also rename or sort the results of these new long and wide data formats! You can find detailed instructions below.
+```
+
+```{r, echo=FALSE}
+rm(long_reshape, wide_reshape)
+```
+
+#### 4.3. Reshaping Data Frames With tidyr
+
+This package allows you to “easily tidy data with the `spread()` and `gather()` functions” and that’s exactly what you’re going to do if you use this package to reshape your data!
+
+If you want to convert from wide to long format, the principle stays similar to the one that of `reshape()`: you use the `gather()` function and you start specifying its arguments:
+
+1. Your data set is the first argument to the `gather()` function
+
+2. Then, you specify the name of the column in which you will combine the the values of `Read`, `Write` and `Listen`. In this case, you want to call it something like `Test` or `Test.Type`.
+
+3. You enter the name of the column in which all the values of the `Read`, `Write` and `Listen` columns are listed.
+
+4. You indicate which columns are supposed to be combined into one. In this case, that will be the columns from `Read`, to `Listen`.
+
+```{r}
+#library(tidyr)
+long_tidyr <- gather(observations_wide, 
+                     Test, 
+                     Result, 
+                     Read:Listen)
+
+long_tidyr
+```
+
+__Note__ how this the last argument specifies the columns in the same way as you did to subset your data frame or to select your data frame’s columns in which you wanted to perform mathematical operations. You can also just specify the columns individually like this:
+
+```{r, eval=FALSE}
+long_tidyr <- gather(observations_wide, 
+                     Test, 
+                     Result, 
+                     Read, 
+                     Write, 
+                     Listen)
+```
+
+The opposite direction, from long to wide format, is very similar to the function above, but this time with the `spread()` function:
+
+```{r}
+# library(tidyr)
+wide_tidyr <- spread(observations_long, 
+                     Test, 
+                     Result)
+
+wide_tidyr
+```
+
+Again, you take as the first argument your data set. Then, you specify the column that contains the new column names. In this case, that is `Test`. Lastly, you input the name of the column that contains the values that should be put into the new columns.
+
+__Tip__: take a look at the [“Data Wrangling With dplyr And tidyr Cheat Sheet”](http://www.rstudio.com/wp-content/uploads/2015/02/data-wrangling-cheatsheet.pdf) for a complete overview of the possibilities that these packages can offer you to wrangle your data!
+
+```{r, echo=FALSE}
+rm(long_tidyr, wide_tidyr)
+```
+
+#### 4.4. Reshaping Data Frames With reshape2
+
+This package, which allows you to “flexibly reshape data”, actually has very straightforward ways of reshaping your data frame.
+
+To go from a wide to a long data format, you use the `melt()` function. This function is pretty easy, since it just takes your data set and the `id.vars` argument, which you may already know from the `reshape()` function. This argument allows you to specify which columns should be left alone by the function.
+
+```{r}
+# library(reshape2)
+long_reshaped2 <- melt(
+  observations_wide, 
+  id.vars=c("Subject", "Gender")
+)
+
+long_reshaped2
+```
+
+__Note__ that this function allows you to specify a couple more arguments:
+
+```{r}
+# library(reshape2)
+long_reshaped2 <- melt(
+  observations_wide, 
+  id.vars=c("Subject", "Gender"),
+  measure.vars=c("Read", "Write", "Listen"),
+  variable.name="Test",
+  value.name="Result"
+)
+
+long_reshaped2
+```
+
+* `measure.vars` is there to name the destination column that will combine the original columns. If you leave out this argument, the `melt()` function will use all other variables as the `id.vars`.
+
+* `variable.name` specifies how you want to name that destination column. If you don’t specify this argument, you will have a column named “variable” in your result.
+
+* `value.name` allows you to input the name of the column in which the values or test results will be stored. If you leave out this argument, this column will be named “measurement”.
+
+You can also go from a long to a wide format with the `reshape2` package with the `dcast()` function. This is fairly easy: you first give in your data set, as always. Then, you combine the columns which you don’t want to be touched; In this case, you want to keep `Subject` and `Gender` as they are. The column `Test` however, you want to split! So, that is the second part of your second argument, indicated by a `~`. The last argument of this function is `value.var`, which holds the values of the different tests. You want to name this new column `Result`:
+
+```{r}
+# library(reshape2)
+wide_reshaped2 <- dcast(
+  observations_long, 
+  Subject + Gender ~ Test,
+  value.var="Result"
+)
+
+wide_reshaped2
+```
+
+```{r, echo=FALSE}
+rm(long_reshaped2, wide_reshaped2)
+```
+
+```{r, echo=FALSE}
+rm(Age, Date, ID, Name)
+rm(Result, Test)
+rm(Gender, Listen)
+rm(Read, Subject, Write)
+rm(observations_wide, observations_long)
+```
+
+### 5. How To Sort A Data Frame
+
+Sorting a data frame by columns might seem tricky, but this can be made easy by either using R’s built-in `order()` function or by using a package.
+
+#### 5.1 R’s Built-In Order() Function
+
+You can for example sort by one of the dataframe’s columns. You order the rows of the data frame according to the values that are stored in the variable `Age.As.Writer`:
+
+```{r}
+writers_df[order(writers_df$Age.As.Writer),]
+```
+
+If you want to sort the values starting from high to low, you can just add the extra argument `decreasing`, which can only take logical values. Another way is to add the function `rev()` so that it includes the `order()` function.
+
+```
+Remember that logical values are TRUE or FALSE, respectively.
+```
+
+```{r}
+writers_df[order(writers_df$Age.As.Writer, decreasing=TRUE),]
+
+writers_df[rev(order(writers_df$Age.As.Writer)),]
+```
+
+You can also add a `-` in front of the numeric variable that you have given to order on.
+
+```{r}
+writers_df[order(-writers_df$Age.As.Writer),]
+```
+
+#### 5.2 Sorting With dplyr
+
+The `dplyr` package, known for its abilities to manipulate data, has a specific function that allows you to sort rows by variables.
+
+Dplyr’s function to make this happen is `arrange()`. The first argument of this function is the data set that you want to sort, while the second and third arguments are the variables that you choose to sort. In this case we sort first on the variable `Age.At.Death` and then on `Age.As.Writer`.
+
+```{r}
+data2 <- arrange(writers_df, Age.At.Death, Age.As.Writer)
+
+data2
+```
+
+```{r, echo=FALSE}
+rm(data2)
+```
+
+You can also use the following approach to get the same result:
+
+```{r}
+writers_df[with(writers_df, order(Age.At.Death, Age.As.Writer)), ]
+```
+
+If you want to sort these columns in descending order, you can add the function desc() to the variables:
+
+```{r}
+desc_sorted_data <- arrange(writers_df, desc(Age.At.Death))
+
+desc_sorted_data
+```
+
+```{r, echo=FALSE}
+rm(desc_sorted_data)
+```
+
+Interested in doing much more with the dplyr package? Check out our [Data Manipulation in R with dplyr](https://www.datacamp.com/courses/dplyr-data-manipulation-r-tutorial) course, which will teach you how to to perform sophisticated data manipulation tasks using dplyr! Also, don’t forget to look at the [“Data Wrangling With dplyr And tidyr Cheat Sheet”](http://www.rstudio.com/wp-content/uploads/2015/02/data-wrangling-cheatsheet.pdf)!
+
+### 6. How To Merge Data Frames
+
+#### 6.1 Merging Data Frames On Column Names
+
+You can use the `merge()` function to join two, but only two, data frames. Let’s say we have a data frame `data2`, which has the same values stored in a variable `Age.At.Death`, which we also find in `writers_df`, with exactly the same values. You thus want to merge the two data frames on the basis of this variable:
+
+```{r}
+data2 <- data.frame(Age.At.Death=c(22,40,72,41), Location=5:8)
+
+data2
+```
+
+We can easily merge these two:
+
+```{r}
+new_writers_df <- merge(writers_df, data2)
+
+new_writers_df
+```
+
+```
+Tip: check what happens if you change the order of the two arguments of the merge() function!
+```
+
+This way of merging is equivalent to an outer join in SQL.
+
+Unfortunately, you’re not always this lucky with your data frames. In many cases, some of the columns names or variable values will differ, which makes it hard to follow the easy, standard procedure that was described just now. In addition, you may not always want to merge in the standard way that was described above. In the following, some of the most common issues are listed and solved!
+
+```{r, echo=FALSE}
+rm(new_writers_df, data2)
+```
+
+#### 6.2 What If… (Some Of) The Data Frame’s Column Values Are Different?
+
+If (some of) the values of the variable on which you merge differ in the data frames, you have a small problem, because the `merge()` function supposes that these are the same so that any new variables that are present in the second data frame can be added correctly to the first data frame. Consider the following data frame:
+
+```{r}
+data2 <- data.frame(x.Age.At.Death=c(21,39,71,40), Location=5:8)
+
+data2
+```
+
+You see that the values for the attribute `Age.At.Death` do not fit with the ones that were defined for the `writers_df` data frame.
+
+No worries, the `merge()` function provides extra arguments to solve this problem. The argument `all.x` allows you to specify to add the extra rows of the `Location` variable to the resulting data frame, even though this column is not present in `writers_df`. In this case, the values of the `Location` variable will be added to the `writers_df` data frame for those rows of which the values of the `Age.At.Death` attribute correspond. All rows where the `Age.At.Death` of the two data frames don’t correspond, will be filled up with `NA` values.
+
+__Note__ that this join corresponds to a left outer join in SQL and that the default value of the `all.x` argument is `FALSE`, which means that one normally only takes into account the corresponding values of the merging variable. Compare with:
+
+```{r}
+merge(writers_df, data2, all.x=FALSE)
+```
+
+You can also specify the argument `all.y=TRUE` if you want to add extra rows for each row that `data2` has no matching row in `writers_df`:
+
+```{r}
+merge(writers_df, data2, all.y=TRUE)
+```
+
+```
+Note that this type of join corresponds to a right outer join in SQL.
+```
+
+```{r, echo=FALSE}
+rm(data2)
+```
+
+#### 6.3 What If… Both Data Frames Have The Same Column Names?
+
+What if your two data frames have exactly the same two variables, with or without the same values?
+
+```{r}
+data2 <- data.frame(Age.At.Death=c(21,39,71,40), Age.As.Writer=c(11,25,36,28))
+
+data2
+```
+
+You can chose to keep all values from all corresponding variables and to add rows to the resulting data frame:
+
+```{r}
+merge(writers_df, data2, all=TRUE)
+```
+
+Or you can just chose to add values from one specific variable for which the ages of death correspond:
+
+```{r}
+merge(writers_df, data2, by="Age.At.Death")
+```
+
+```{r, echo=FALSE}
+rm(data2)
+```
+
+#### 6.4 What If… The Data Frames’ Column Names Are Different?
+
+Lastly, what if the variable’s names on which you merge differ in the two data frames?
+
+```{r}
+data2 <- data.frame(Age=c(22,40,72,41), Location=5:8)
+```
+
+You just specify in the `merge()` function that there are two other specifications through the arguments `by.x` and `by.y`.
+
+```{r}
+merge(writers_df, data2, by.x="Age.At.Death", by.y="Age")
+```
+
+```{r, echo=FALSE}
+rm(data2)
+```
+
+#### 6.5 Merging Data Frames On Row Names
+
+You can indeed merge the columns of two data frames, that contain a distinct set of columns but some rows with the same names. The `merge()` function and its arguments come to the rescue!
+
+Consider this second data frame:
+
+```{r}
+Address <- c("50 West 10th", "77 St. Marks Place", "778 Park Avenue")
+Maried <- c("YES", "NO", "YES")
+
+limited_writers_df <- data.frame(Address, Maried)
+
+limited_writers_df
+```
+
+You see that this data set contains three rows, marked with numbers 1 to 3, and two additional columns that are not in the `writers_df` data frame. To merge these two data frames, we add the argument `by` to the `merge()` function and set it at the number 0, which specifies the row names. Since you choose to keep all values from all corresponding variables and to add columns to the resulting data frame, you set the `all` argument to `TRUE`:
+
+```{r}
+writers_row_sorted <- merge(writers_df, limited_writers_df, by=0, all=TRUE)
+
+writers_row_sorted
+```
+
+It could be that the fields for rows that don’t occur in both data frames result in NA-values. You can easily solve this by removing them. This will be discussed below.
+
+```{r, echo=FALSE}
+rm(Address, Maried, limited_writers_df, writers_row_sorted)
+```
+
+#### 6.6 How To Remove Data Frames’ Rows And Columns With NA-Values
+
+To remove all rows that contain NA-values, one of the easiest options is to use the `na.omit()` function, which takes your data frame as an argument. Let’s recycle the code from the previous section in which two data frames were merged, with a lot of resulting NA-values:
+
+```{r}
+data2 <- data.frame(Age.At.Death=c(21,39,71,40), Location=5:8)
+
+data2
+```
+
+```{r}
+merge <- merge(writers_df, data2, all.y=TRUE)
+
+na.omit(merge)
+```
+
+```{r, echo=FALSE}
+rm(data2, merge)
+```
+
+If you just want to select part of your data frame from which you want to remove the NA-values, it’s better to use `complete.cases()`. In this case, you’re interested to keep all rows for which the values of the columns `Age.As.Writer` and `Name` are complete:
+
+```{r}
+data2 <- data.frame(Age.At.Death=c(21,39,71,40), Location=5:8)
+
+data2
+```
+
+```{r}
+merge <- merge(writers_df, data2, all.y=TRUE)
+
+merge[complete.cases(merge[,2:3]),]
+```
+
+```{r, echo=FALSE}
+rm(data2, merge)
+```
+
+
+### 7 How To Convert Lists Or Matrices To Data Frames And Back
+
+#### 7.1 From Lists or Matrices To Data Frames
+
+Lists or matrices that comply with the restrictions that the data frame imposes can be coerced into data frames with the `as.data.frame()` function. Remember that a data frame is similar to the structure of a matrix, where the columns can be of different types. Data frames are also similar to lists, where each column is an element of the list and each element has the same length. Any matrices or lists that you want to convert to data frames need to satisfy with these restrictions.
+
+For example, the matrix A can be converted to a data frame because each column contains values of the numeric data type:
+
+```{r}
+A <- matrix(c(2, 4, 3, 1, 5, 7), nrow=2, ncol=3, byrow = TRUE) 
+
+A
+```
+
+You enter the matrix A as an argument to the `as.data.frame()` function:
+
+```{r}
+A_df <- as.data.frame(A)
+
+A_df
+```
+
+You can follow the same procedures for lists like the one that is shown below:
+
+```{r}
+n = c(2, 3, 5) 
+s = c("aa", "bb", "cc")
+b = c(TRUE, FALSE, TRUE)
+x = list(n, s, b, 3)
+x_df <- as.data.frame(x)
+
+x_df
+```
+
+```{r, echo=FALSE}
+rm(A, A_df, n, s, b, x, x_df)
+```
+
+#### 7.2 Changing A Data Frame To A Matrix Or List
+
+To make the opposite move, that is, to convert data frames to matrices and lists, you first have to check for yourself if this is possible. Does you data frame contain one or more dimensions and what about the amount of data types? Rewatch the small animation of the introduction if you’re not sure what data structure to pick.
+
+Once you have an answer, you can use the functions `as.matrix()` and `as.list()` to convert your data frame to a matrix or a list, respectively:
+
+```{r}
+writers_matrix <- as.matrix(writers_df)
+
+writers_matrix
+```
+
+```{r}
+writers_list <- as.list(writers_df)
+writers_list
+```
+
+For those of you who want to specifically make numeric matrices, you can use the function `data.matrix()` or add an `sapply()` function to the `as.matrix()` function:
+
+
+```{r, eval=FALSE}
+writers_matrix <- data.matrix(writers_df)
+writers_matrix <- as.matrix(sapply(writers_df, as.numeric))
+```
+
+```
+Note that with the current writers_df data frame, which contains a mixture of data types, NA-values will be introduced in the resulting matrices.
+```
+
+```{r, echo=FALSE}
+rm(writers_matrix, writers_list)
+```
+
+### 8. From Data Frames To Data Analysis, Data Manipulation and Data Visualization
+
+Data frames are just the beginning of your data analysis! There is much more to see and know about data frames and the other R data structures. If this tutorial has gotten you thrilled to dig deeper into programming with R, make sure to check out our free interactive [Introduction to R](https://www.datacamp.com/courses/free-introduction-to-r) course. Those of you who are already more advanced with R and that want to take their skills to a higher level might be interested in our courses on data manipulation and data visualization. Go to our [course overview](https://www.datacamp.com/courses) and take a look!
+
+```{r, echo=FALSE}
+rm(writers_df)
+```
